@@ -1,0 +1,132 @@
+---
+title: "Tarea 2"
+author: "Daniela Ramírez"
+date: "2026-02-13"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(Rtsne)
+```
+
+
+## SVD
+```{r}
+data("USArrests")
+str(USArrests)
+```
+
+#Preprocesamiento
+```{r}
+data_scaled <- scale(USArrests)
+```
+
+#Aplicación de SVD
+```{r}
+svd_result <- svd(data_scaled)
+
+# Valores singulares
+svd_result$d
+```
+
+#Varianza explicada
+```{r}
+var_explained <- svd_result$d^2 / sum(svd_result$d^2)
+var_explained
+
+var_acumulada <- cumsum(var_explained)
+var_acumulada
+```
+Es posible representar el dataset original de 4 dimensiones utilizando únicamente 2 dimensiones, conservando más del 86% de la información.
+
+##Proyección a 2 dimensiones
+```{r}
+reduced_data <- data.frame(svd_result$u[,1:2])
+reduced_data$State <- rownames(USArrests)
+
+head(reduced_data)
+```
+Componente 1 (X1)
+
+Este eje parece capturar un gradiente general de criminalidad:
+  Estados como California y Nevada presentan valores negativos extremos.
+  Estados como North Dakota, Vermont y West Virginia aparecen en el extremo opuesto.
+Esto sugiere que el primer componente distingue estados con mayores tasas generales de criminalidad frente a estados con menores tasas.
+
+El segundo eje parece capturar variaciones específicas en tipos particulares de delito o en el grado de urbanización.
+
+Por ejemplo:
+California presenta un valor alto en X2.
+Estados del sur como Mississippi y North Carolina aparecen en valores negativos.
+Este eje podría estar diferenciando patrones específicos de criminalidad más que el nivel global.
+
+##Visualización
+```{r}
+ggplot(reduced_data, aes(x = X1, y = X2, label = State)) +
+  geom_point(color = "blue", size = 3) +
+  geom_text(size = 3, vjust = -0.5) +
+  theme_minimal() +
+  labs(title = "SVD - Proyección a 2 dimensiones",
+       x = "Componente 1",
+       y = "Componente 2")
+```
+En el gráfico se pueden identificar tres tendencias principales:
+  Estados con alta criminalidad general.
+  Estados con criminalidad moderada.
+  Estados con baja criminalidad.
+Además, algunos estados del sur tienden a agruparse en zonas similares del espacio reducido, lo que indica correlaciones estructurales entre sus variables.
+
+##Scree plot
+```{r}
+plot(var_explained,
+     type = "b",
+     pch = 19,
+     xlab = "Componente",
+     ylab = "Proporción de Varianza",
+     main = "Scree Plot - SVD")
+```
+Presencia de un "codo" en el segundo componente, sugiriendo que dos componentes son suficientes para representar adecuadamente la estructura del conjunto de datos.
+
+##t-SNE
+```{r}
+# Cargar dataset nativo
+data("iris")
+
+# Ver estructura
+str(iris)
+```
+
+```{r}
+iris_numeric <- iris[,1:4]
+iris_scaled <- scale(iris_numeric)
+```
+
+```{r}
+set.seed(123)
+
+tsne_result <- Rtsne(
+  iris_scaled,
+  dims = 2,
+  perplexity = 30,
+  max_iter = 500,
+  verbose = TRUE
+)
+```
+
+```{r}
+tsne_data <- data.frame(tsne_result$Y)
+tsne_data$Species <- iris$Species
+
+head(tsne_data)
+```
+
+```{r}
+ggplot(tsne_data, aes(x = X1, y = X2, color = Species)) +
+  geom_point(size = 3) +
+  theme_minimal() +
+  labs(title = "t-SNE - Visualización 2D",
+       x = "Dimensión 1",
+       y = "Dimensión 2")
+```

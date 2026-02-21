@@ -91,42 +91,195 @@ Presencia de un "codo" en el segundo componente, sugiriendo que dos componentes 
 
 ##t-SNE
 ```{r}
+## ==============================
+## t-SNE - Reducción de Dimensionalidad
+## Dataset: iris (nativo de R)
+## ==============================
+
+# Librerías
+# Instalar solo si no está instalada
+# install.packages("Rtsne")
+
+library(Rtsne)
+library(ggplot2)
+
+# ------------------------------
 # Cargar dataset nativo
+# ------------------------------
 data("iris")
 
 # Ver estructura
 str(iris)
-```
 
-```{r}
-iris_numeric <- iris[,1:4]
+# ------------------------------
+# Preparación de datos
+# ------------------------------
+# Seleccionar solo variables numéricas
+iris_numeric <- iris[, 1:4]
+
+# Escalar variables (media = 0, sd = 1)
 iris_scaled <- scale(iris_numeric)
-```
 
-```{r}
-set.seed(123)
+# ------------------------------
+# Aplicación de t-SNE
+# ------------------------------
+set.seed(123)  # Reproducibilidad
 
 tsne_result <- Rtsne(
   iris_scaled,
   dims = 2,
   perplexity = 30,
   max_iter = 500,
+  check_duplicates = FALSE,  # Evita error por duplicados
   verbose = TRUE
 )
-```
 
-```{r}
+# ------------------------------
+# Crear dataframe con resultados
+# ------------------------------
 tsne_data <- data.frame(tsne_result$Y)
+colnames(tsne_data) <- c("Dim1", "Dim2")
+
+# Agregar etiquetas
 tsne_data$Species <- iris$Species
 
+# Ver primeras filas
 head(tsne_data)
+
+# ------------------------------
+# Visualización
+# ------------------------------
+ggplot(tsne_data, aes(x = Dim1, y = Dim2, color = Species)) +
+  geom_point(size = 3) +
+  theme_minimal() +
+  labs(
+    title = "t-SNE aplicado al dataset iris",
+    x = "Dimensión 1",
+    y = "Dimensión 2"
+  )
+```
+```{r}
+## ==============================
+## UMAP - Reducción de Dimensionalidad
+## Dataset: iris (nativo de R)
+## ==============================
+
+# Instalar solo si no está instalada
+# install.packages("umap")
+
+library(umap)
+library(ggplot2)
+
+# ------------------------------
+# Cargar dataset nativo
+# ------------------------------
+data("iris")
+
+# Ver estructura
+str(iris)
+
+# ------------------------------
+# Preparación de datos
+# ------------------------------
+iris_numeric <- iris[, 1:4]
+iris_scaled <- scale(iris_numeric)
+
+# ------------------------------
+# Configuración de UMAP
+# ------------------------------
+umap_config <- umap.defaults
+umap_config$n_neighbors <- 15
+umap_config$min_dist <- 0.1
+umap_config$random_state <- 123  # Reproducibilidad
+
+# ------------------------------
+# Aplicación de UMAP
+# ------------------------------
+umap_result <- umap(iris_scaled, config = umap_config)
+
+# ------------------------------
+# Crear dataframe con resultados
+# ------------------------------
+umap_data <- data.frame(umap_result$layout)
+colnames(umap_data) <- c("Dim1", "Dim2")
+
+umap_data$Species <- iris$Species
+
+head(umap_data)
+
+# ------------------------------
+# Visualización
+# ------------------------------
+ggplot(umap_data, aes(x = Dim1, y = Dim2, color = Species)) +
+  geom_point(size = 3) +
+  theme_minimal() +
+  labs(
+    title = "UMAP aplicado al dataset iris",
+    x = "Dimensión 1",
+    y = "Dimensión 2"
+  )
 ```
 
 ```{r}
-ggplot(tsne_data, aes(x = X1, y = X2, color = Species)) +
+## ==============================
+## ICA - Independent Component Analysis
+## Dataset: iris (nativo de R)
+## ==============================
+
+# Instalar solo si no está instalada
+# install.packages("fastICA")
+
+library(fastICA)
+library(ggplot2)
+
+# ------------------------------
+# Cargar dataset nativo
+# ------------------------------
+data("iris")
+
+# Ver estructura
+str(iris)
+
+# ------------------------------
+# Preparación de datos
+# ------------------------------
+# Seleccionar variables numéricas
+iris_numeric <- iris[, 1:4]
+
+# Escalar datos (importante para ICA)
+iris_scaled <- scale(iris_numeric)
+
+# ------------------------------
+# Aplicación de ICA
+# ------------------------------
+set.seed(123)
+
+ica_result <- fastICA(
+  iris_scaled,
+  n.comp = 2,     # Número de componentes independientes
+  method = "C",   # Método estándar
+  fun = "logcosh" # Función de no-gaussianidad
+)
+
+# ------------------------------
+# Crear dataframe con resultados
+# ------------------------------
+ica_data <- data.frame(ica_result$S)
+colnames(ica_data) <- c("IC1", "IC2")
+
+ica_data$Species <- iris$Species
+
+head(ica_data)
+
+# ------------------------------
+# Visualización
+# ------------------------------
+ggplot(ica_data, aes(x = IC1, y = IC2, color = Species)) +
   geom_point(size = 3) +
   theme_minimal() +
-  labs(title = "t-SNE - Visualización 2D",
-       x = "Dimensión 1",
-       y = "Dimensión 2")
+  labs(
+    title = "ICA aplicado al dataset iris",
+    x = "Componente Independiente 1",
+    y = "Componente Independiente 2"
+  )
 ```
